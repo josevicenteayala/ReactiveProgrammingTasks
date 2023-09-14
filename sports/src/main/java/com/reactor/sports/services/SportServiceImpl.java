@@ -26,4 +26,14 @@ public class SportServiceImpl implements SportService {
     public Mono<Sport> createSport(Sport sport) {
         return sportRepository.save(sport);
     }
+
+    @Override
+    public Mono<Sport> createSport(String sport) {
+        return sportRepository.save(new Sport(sport));
+    }
+
+    @Override
+    public Flux<Sport> getSportsByName(String sport) {
+        return sportRepository.findByName(sport);
+    }
 }

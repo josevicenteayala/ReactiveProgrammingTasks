@@ -10,4 +10,7 @@ public interface SportService {
 
     Mono<Sport> createSport(Sport sport);
 
+    Mono<Sport> createSport(String sport);
+
+    Flux<Sport> getSportsByName(String sport);
 }

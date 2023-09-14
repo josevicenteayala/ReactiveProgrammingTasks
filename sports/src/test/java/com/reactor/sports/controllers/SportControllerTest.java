@@ -16,10 +16,36 @@ class SportControllerTest {
     private WebTestClient webTestClient;
 
     @Test
-    public void testGetEndpoint() {
+    public void testPostEndpoint() {
+        Sport sportEntity = createSportEntityWithoutId();
+        webTestClient
+                .post()
+                .uri("/api/v1/sports")
+                .body(Mono.just(sportEntity), Sport.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(Sport.class)
+                .value(response -> response.equals(sportEntity));
+    }
+
+    @Test
+    public void testPostByNameEndpoint() {
+        Sport sportEntity = new Sport(2, "Baseball");
+        webTestClient
+                .post()
+                .uri("/api/v1/sports/Baseball")
+                .body(Mono.just(sportEntity), Sport.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(Sport.class)
+                .value(response -> response.equals(sportEntity));
+    }
+
+    @Test
+    public void testGetAllSportsEndpoint() {
         webTestClient
                 .get()
-                .uri("/api/sports")
+                .uri("/api/v1/sports")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class)
@@ -28,18 +54,26 @@ class SportControllerTest {
     }
 
     @Test
-    public void testPostEndpoint() {
-        Sport sportEntity = createSportEntityWithoutId();
+    public void testGetByNameEndpoint() {
         webTestClient
-                .post()
-                .uri("/api/sports")
-                .body(Mono.just(sportEntity), Sport.class)
+                .get()
+                .uri("/api/v1/sports/byName?sportName=Hockey")
                 .exchange()
-                .expectStatus().isCreated()
-                .expectBody(Sport.class)
-                .value(response -> {
-                    response.equals(sportEntity);
-                });
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .isEqualTo("""
+                        [{"id":1,"name":"Hockey","new":false}]""");
+    }
+
+    @Test
+    public void testGetByNameNotFoundSport() {
+        webTestClient
+                .get()
+                .uri("/api/v1/sports/byName?sportName=NoSport")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(String.class)
+                .isEqualTo(null);
     }
 
     private Sport createSportEntityWithoutId() {
