@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
@@ -18,7 +20,7 @@ class SportControllerTest {
 
     @Test
     public void testPostEndpoint() {
-        Sport sportEntity = createSportEntityWithoutId();
+        Sport sportEntity = createSportEntityWithoutId("Hockey");
         webTestClient
                 .post()
                 .uri("/api/v1/sports")
@@ -77,13 +79,9 @@ class SportControllerTest {
                 .isEqualTo(null);
     }
 
-    private Sport createSportEntityWithoutId() {
-        return new Sport("Hockey");
-    }
-
     @Test
-    public void testGetByNamePartialContentEndpoint() {
-        Sport sportEntity = createSportEntityWithoutId();
+    public void testGetAllSportsUsingPartialContent() {
+        Sport sportEntity = createSportEntityWithoutId("Aerobics");
         for (int i = 0;i<40;i++) {
             webTestClient
                     .post()
@@ -94,12 +92,14 @@ class SportControllerTest {
 
         webTestClient
                 .get()
-                .uri("/api/v1/sports/byNamePartialContent?sportName=Hockey")
+                .uri("/api/v1/sports/partial")
                 .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .isEqualTo("""
-                        [{"id":1,"name":"Hockey","new":false}]""");
+                .expectStatus().isEqualTo(HttpStatus.PARTIAL_CONTENT)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBodyList(String.class);
     }
 
+    private Sport createSportEntityWithoutId(String sport) {
+        return new Sport(sport);
+    }
 }
