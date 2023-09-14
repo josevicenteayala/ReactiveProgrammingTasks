@@ -3,6 +3,8 @@ package com.reactor.sports.controllers;
 import com.reactor.sports.model.Sport;
 import com.reactor.sports.services.SportService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,8 +26,9 @@ public class SportController {
     }
 
     @PostMapping
-    public Mono<Sport> createSport(@RequestBody Sport sport) {
-        return sportService.createSport(sport);
+    public Mono<ResponseEntity<Sport>> createSport(@RequestBody Sport sport) {
+        return sportService.createSport(sport)
+                .map(createdSport -> ResponseEntity.status(HttpStatus.CREATED).body(createdSport));
     }
 
 }
