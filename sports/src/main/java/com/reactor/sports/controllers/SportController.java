@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @RestController
 @RequestMapping(value = "/api/v1/sports")
@@ -60,6 +61,21 @@ public class SportController {
                 });
     }
 
+    @GetMapping("/byNamePartialContent")
+    public Mono<ResponseEntity<Flux<Sport>>> getSportsByNamePartialContent(@RequestParam(name = "sportName") String sportName) {
+        return sportService.getSportsByName(sportName)
+                .limitRate(2)
+                .log()
+                .subscribeOn(Schedulers.boundedElastic())
+                .collectList()
+                .flatMap(list -> {
+                    if(list.isEmpty()) {
+                        return Mono.just(ResponseEntity.notFound().build());
+                    } else {
+                        return Mono.just(ResponseEntity.ok(Flux.fromIterable(list)));
+                    }
+                });
+    }
 
 
 }

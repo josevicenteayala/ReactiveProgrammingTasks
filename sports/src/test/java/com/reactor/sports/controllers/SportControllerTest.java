@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class SportControllerTest {
@@ -30,7 +31,7 @@ class SportControllerTest {
 
     @Test
     public void testPostByNameEndpoint() {
-        Sport sportEntity = new Sport(2, "Baseball");
+        Sport sportEntity = new Sport("Baseball");
         webTestClient
                 .post()
                 .uri("/api/v1/sports/Baseball")
@@ -79,4 +80,26 @@ class SportControllerTest {
     private Sport createSportEntityWithoutId() {
         return new Sport("Hockey");
     }
+
+    @Test
+    public void testGetByNamePartialContentEndpoint() {
+        Sport sportEntity = createSportEntityWithoutId();
+        for (int i = 0;i<40;i++) {
+            webTestClient
+                    .post()
+                    .uri("/api/v1/sports")
+                    .body(Mono.just(sportEntity), Sport.class)
+                    .exchange();
+        }
+
+        webTestClient
+                .get()
+                .uri("/api/v1/sports/byNamePartialContent?sportName=Hockey")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .isEqualTo("""
+                        [{"id":1,"name":"Hockey","new":false}]""");
+    }
+
 }
