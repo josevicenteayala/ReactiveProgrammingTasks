@@ -5,6 +5,7 @@ import com.reactor.sports.services.SportService;
 import java.time.Duration;
 import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,8 @@ import reactor.util.function.Tuple2;
 @RequestMapping(value = "/api/v1/sports")
 public class SportController {
 
+    @Value("${sports.prefetch.rate:20}")
+    public int PREFETCH_RATE;
     @Autowired
     private SportService sportService;
 
@@ -47,14 +50,14 @@ public class SportController {
         return sportService.getAllSports()
                 .log()
                 .subscribeOn(Schedulers.boundedElastic())
-                .limitRate(20);
+                .limitRate(PREFETCH_RATE);
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<Sport> getAllSportsBackpressureStream() {
         return sportService.getAllSports()
                 .log()
-                .limitRate(20)
+                .limitRate(PREFETCH_RATE)
                 .flatMap(sport -> Flux.zip(
                         Flux.interval(Duration.ofSeconds(2)),
                         Flux.fromStream(Stream.generate(() -> sport))
@@ -89,7 +92,7 @@ public class SportController {
     @GetMapping("/byNamePartialContent")
     public Mono<ResponseEntity<Flux<Sport>>> getSportsByNamePartialContent(@RequestParam(name = "sportName") String sportName) {
         return sportService.getSportsByName(sportName)
-                .limitRate(2)
+                .limitRate(PREFETCH_RATE)
                 .log()
                 .subscribeOn(Schedulers.boundedElastic())
                 .collectList()
